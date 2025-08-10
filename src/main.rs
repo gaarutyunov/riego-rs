@@ -7,8 +7,8 @@ use riego_rs::map;
 use riego_rs::{panic as _};
 
 // For some reason the sensor values are inverted
-const MIN_MOISTURE: u16 = 535;
-const MAX_MOISTURE: u16 = 265;
+const MIN_MOISTURE: u16 = 540;
+const MAX_MOISTURE: u16 = 230;
 
 
 #[arduino_hal::entry]
