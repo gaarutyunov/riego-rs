@@ -1,40 +1,13 @@
 #![no_std]
 
 use core::ops::{Add, Div, Mul, Sub};
-use arduino_hal::prelude::*;
 
-/// Maps a value from one range to another.
-/// 
-/// This function is useful for converting sensor readings from one range to another,
-/// such as converting raw ADC values to percentages.
-/// 
-/// # Arguments
-/// 
-/// * `value` - The input value to map
-/// * `in_min` - The minimum value of the input range
-/// * `in_max` - The maximum value of the input range  
-/// * `out_min` - The minimum value of the output range
-/// * `out_max` - The maximum value of the output range
-/// 
-/// # Returns
-/// 
-/// The mapped value in the output range
-/// 
-/// # Examples
-/// ```
-/// // Map raw ADC value (250-550) to percentage (0-100)
-/// use riego_rs::map;
-/// let sensor_value = 534;
-/// let percentage = map(sensor_value, 265, 535, 0, 100);
-/// assert_eq!(percentage, 51);
-/// ```
 pub fn map<T>(value: T, in_min: T, in_max: T, out_min: T, out_max: T) -> T
 where
     T: Copy + PartialOrd + Sub<Output = T> + Mul<Output = T> + Div<Output = T> + Add<Output = T>,
 {
     (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
 }
-
 
 #[cfg(not(doc))]
 #[panic_handler]
@@ -44,23 +17,16 @@ pub fn panic(info: &core::panic::PanicInfo) -> ! {
 
     // get the peripherals so we can access serial and the LED.
     //
-    // SAFETY: Because main() already has references to the peripherals this is an unsafe
-    // operation - but because no other code can run after the panic handler was called,
-    // we know it is okay.
+    // SAFETY: Because main() already has references to the peripherals this is an
+    // unsafe operation - but because no other code can run after the panic
+    // handler was called, we know it is okay.
     let dp = unsafe { arduino_hal::Peripherals::steal() };
     let pins = arduino_hal::pins!(dp);
     let mut serial = arduino_hal::default_serial!(dp, pins, 57600);
 
     // Print panic location:
     if let Some(loc) = info.location() {
-        ufmt::uwriteln!(
-            &mut serial,
-            "  At {}:{}:{}\r",
-            loc.file(),
-            loc.line(),
-            loc.column(),
-        )
-        .ok();
+        ufmt::uwriteln!(&mut serial, "  At {}:{}:{}\r", loc.file(), loc.line(), loc.column(),).ok();
     }
 
     // Blink LED rapidly

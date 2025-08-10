@@ -1,0 +1,35 @@
+# rustfmt configuration for embedded Rust project
+edition = "2021"
+
+# Code style
+max_width = 100
+hard_tabs = false
+tab_spaces = 4
+use_small_heuristics = "Max"
+
+# Import formatting
+imports_granularity = "Crate"
+reorder_imports = true
+group_imports = "StdExternalCrate"
+
+# Function formatting
+fn_args_layout = "Tall"
+brace_style = "SameLineWhere"
+
+# Comments and documentation
+format_code_in_doc_comments = true
+normalize_comments = true
+wrap_comments = true
+comment_width = 80
+
+# Misc
+newline_style = "Unix"
+remove_nested_parens = true
+use_field_init_shorthand = true
+force_explicit_abi = true
+
+# Nightly-only features (since you're using nightly toolchain)
+unstable_features = true
+format_macro_matchers = true
+format_macro_bodies = true
+hex_literal_case = "Lower"
