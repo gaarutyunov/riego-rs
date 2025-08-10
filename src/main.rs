@@ -4,11 +4,13 @@
 use arduino_hal::prelude::*;
 use riego_rs::{map, panic as _};
 
-const MIN_MOISTURE: u16 = 535;
-const MAX_MOISTURE: u16 = 265;
+// For some reason the sensor values are inverted
+const MIN_MOISTURE: u16 = 540;
+const MAX_MOISTURE: u16 = 230;
 
 const MOISTURE_THRESHOLD: u16 = 30; // Threshold for activating the relay
-const WATERING_DURATION: u32 = 1000; // Duration to activate the relay in milliseconds
+const MOISTURE_TARGET: u16 = 50; // Target moisture level to maintain
+const WATERING_DURATION: u32 = 200; // Duration to activate the relay in milliseconds
 
 #[arduino_hal::entry]
 fn main() -> ! {
@@ -24,6 +26,8 @@ fn main() -> ! {
     // Moisture sensor connected to A0
     let sensor_pin = pins.a0.into_analog_input(&mut adc);
 
+    let mut watering = false;
+
     loop {
         let sensor_value: u16 = sensor_pin.analog_read(&mut adc);
         // Adjust the sensor value to a range to avoid overflow
@@ -36,10 +40,13 @@ fn main() -> ! {
         ufmt::uwrite!(&mut serial, "Moisture Level: {}%\r\n", moisture_percentage)
             .unwrap_infallible();
         ufmt::uwrite!(&mut serial, "Threshold: {}%\r\n", MOISTURE_THRESHOLD).unwrap_infallible();
+        ufmt::uwrite!(&mut serial, "Target: {}%\r\n", MOISTURE_TARGET).unwrap_infallible();
 
-        // Activate the relay if the moisture level is below the threshold
-        if moisture_percentage < MOISTURE_THRESHOLD {
+        // Water if below threshold until the moisture level reaches the target
+        if !watering && moisture_percentage < MOISTURE_THRESHOLD || watering && moisture_percentage < MOISTURE_TARGET {
             relay.set_low();
+            watering = true;
+            ufmt::uwrite!(&mut serial, "Watering until {}%\r\n", MOISTURE_TARGET).unwrap_infallible();
             ufmt::uwrite!(
                 &mut serial,
                 "Relay activated for watering during {} ms.\r\n",
@@ -49,8 +56,11 @@ fn main() -> ! {
             arduino_hal::delay_ms(WATERING_DURATION);
             relay.set_high();
             ufmt::uwrite!(&mut serial, "Relay deactivated.\r\n").unwrap_infallible();
+        } else {
+            watering = false;
+            ufmt::uwrite!(&mut serial, "No watering needed.\r\n").unwrap_infallible();
         }
 
-        arduino_hal::delay_ms(5000);
+        arduino_hal::delay_ms(1000);
     }
 }
